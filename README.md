@@ -50,7 +50,7 @@ Plus 是基于 Laravel 所开发，它拥有下面的几个主要特点：
 
 安装 Plus 是一件非常简单的事情，但是你要先做到以下几点必须：
 
-1. PHP 版本必须大于 `7.0.12`
+1. PHP 版本必须大于 `7.1.3`
 2. 你已下载并安装过 `Composer`
 3. 你拥有一个 `MySQL` 或者 `PostgreSQL` 等数据库
 4. 你必须安装一个 Git 命令行工具
@@ -112,7 +112,7 @@ php artisan serve
 这个仓库的贡献者并不代表只是 Plus 的贡献者，我们也会把 Laravel 的贡献者加入感谢名单，因为他们为 Laravel 所做出的贡献，也使得 Plus 项目更加强大。
 
 感谢所有为 Plus 贡献的人！
-<a href="graphs/contributors"><img src="https://opencollective.com/thinksns-plus/contributors.svg?width=890" /></a>
+<a href="https://github.com/slimkit/thinksns-plus/graphs/contributors"><img src="https://opencollective.com/thinksns-plus/contributors.svg?width=890" /></a>
 
 ### [行为守则](https://github.com/slimkit/thinksns-plus/blob/master/CODE_OF_CONDUCT.md)
 

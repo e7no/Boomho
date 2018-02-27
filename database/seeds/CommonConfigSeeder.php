@@ -16,26 +16,22 @@
  * +----------------------------------------------------------------------+
  */
 
-namespace Zhiyi\Plus\Tests;
+use Illuminate\Database\Seeder;
+use Zhiyi\Plus\Models\CommonConfig;
 
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Contracts\Console\Kernel;
-
-trait CreatesApplication
+class CommonConfigSeeder extends Seeder
 {
     /**
-     * Creates the application.
+     * 添加注册用户的默认用户组.
      *
-     * @return \Illuminate\Foundation\Application
+     * @return void
      */
-    public function createApplication()
+    public function run()
     {
-        $app = require __DIR__.'/../bootstrap/app.php';
-
-        $app->make(Kernel::class)->bootstrap();
-
-        Hash::driver('bcrypt')->setRounds(4);
-
-        return $app;
+        CommonConfig::create([
+            'name' => 'default_role',
+            'namespace' => 'user',
+            'value' => 2,
+        ]);
     }
 }

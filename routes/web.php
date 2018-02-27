@@ -16,15 +16,29 @@
  * +----------------------------------------------------------------------+
  */
 
-// if (! Route::getRoutes()->hasNamedRoute('home')) {
-    Route::get('/', 'HomeController@welcome')->name('home');
-// }
+if (! Route::has('home')) {
+    /**
+     * Get front “/” route.
+     *
+     * @var \Illuminate\Routing\Route
+     */
+    $route = array_get(Route::getRoutes()->get('GET'), '/');
 
-if (! Route::getRoutes()->hasNamedRoute('login')) {
+    // Not defined "/" route,
+    // Create a default "/" route.
+    if (! $route) {
+        $route = Route::get('/', 'HomeController@welcome');
+    }
+
+    // Set "/" route name as "home"
+    $route->name('home');
+}
+
+if (! Route::has('login')) {
     Route::get('/auth/login', 'Auth\\LoginController@showLoginForm')->name('login');
 }
 
-if (! Route::getRoutes()->hasNamedRoute('logout')) {
+if (! Route::has('logout')) {
     Route::any('auth/logout', 'Auth\\LoginController@logout')->name('logout');
 }
 
