@@ -105,8 +105,7 @@
         "slimkit/plus-socialite": "1.7.0",
         "symfony/finder": "^4.0",
         "symfony/yaml": "^4.0",
-        "tymon/jwt-auth": "1.0.0-rc.2",
-        "zhiyicx/plus-component-h5": "^3.5"
+        "tymon/jwt-auth": "1.0.0-rc.2"
     },
     "require-dev": {
         "codacy/coverage": "^1.4",
