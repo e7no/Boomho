@@ -12,6 +12,15 @@ jpush.log
 /config/component.php
 /config/component_routes.php
 /config/providers.php
+/config/checkin.php
+/config/feed.php
+/config/news.php
+/config/plus-appversion.php
+/config/plus-id.php
+/config/socialite.php
+/config/tinker.php
+/config/trustedproxy.php
+
 /node_modules
 /public/hot
 /public/storage
