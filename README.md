@@ -1,14 +1,3 @@
-<p align="center"><img src="https://github.com/slimkit/thinksns-plus/raw/master/public/plus.png"></p>
-
-Plus (ThinkSNS Plus) 是一个使用 Laravel 开发，并且功能繁多且健壮的社交程序。Plus 是遵循 **PSR 规范** 代码统一，并功能块松耦合。你安装完成 Plus 并不意味着已经成功安装了所有功能，因为 Plus 使用 **模块化** 的
-原则，所以你安装完成后拥有了所有可以被请求的 REST 接口和后台管理面板，你可能还需要安装如下模块：
-
-- 一个对搜索引擎支持良好的大屏 Web 界面 👉 [ThinkSNS Plus PC](https://github.com/zhiyicx/plus-component-pcos)
-- 极大程度还原原生 APP 体验的 SPA (Single Page Application) 应用 👉 [ThinkSNS Plus SPA](https://github.com/zhiyicx/plus-component-h5)
-- 一个更加强大的大屏 Web 界面应用 (但它是收费的) 👉 [Plus PC](https://github.com/zhiyicx/plus-component-pc)
-
-> 如果你关注 ThinkSNS 所属公司更多开源产品，请看[ThinkSNS 官网](http://www.thinksns.com)
-
 ## Badges
 
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/8320deaa80b8489f95fcedaae6df079d)](https://www.codacy.com/app/zhiyi/thinksns-plus?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=slimkit/thinksns-plus&amp;utm_campaign=Badge_Grade)
@@ -87,13 +76,6 @@ php artisan serve
 现在你可以访问 `http://127.0.0.1:8000` 查看你安装的 Plus 程序了，但是上述只是一份简单的安装，更加详细或者可以运行在
 正式环境的安装指南请参阅 👉 [安装指南](https://slimkit.github.io/docs/server-getting-started-installation.html)
 
-## 交流 & 支持
-
-针对不同的用户，我们准备了两个 QQ 群，分别是：
-
-- 技术交流群：`NjUxMjQwNzg1`，该群适合技术交流，不接受普通用户加入。（解码提示：`atoa`）
-- 用户交流群：`638051536`，该群所有人都可以加入并进行交流。
-
 ## 贡献
 
 这个仓库的贡献者并不代表只是 Plus 的贡献者，我们也会把 Laravel 的贡献者加入感谢名单，因为他们为 Laravel 所做出的贡献，也使得 Plus 项目更加强大。
@@ -110,32 +92,6 @@ php artisan serve
 阅读我们的 [贡献指南](https://github.com/slimkit/thinksns-plus/blob/master/.github/CONTRIBUTING.md)，了解我们的开发过程，
 如题提出错误修正或者建议，我们在贡献指南中包含了所有的贡献者名单。
 
-## 赞助
-
-首先，我们有一个特约赞助商 👉 [成都 · 智艺创想](http://www.zhiyicx.com)，该赞助商为 Plus 团队提供了一个开发的基础，提供工作场所以及提供商务处理事宜，并且开发了如下商业项目：
-
-- ThinkSNS Plus Android 客户端
-- ThinkSNS Plus iOS 客户端
-- 一个强大且全面的大屏 Web 界面应用
-- 问答模块
-- 圈子社群模块
-
-如果你对这些商业模块感兴趣，可以联系 QQ `3298713109` 了解更多细节。
-
-### 赞助商
-
-感谢所有赞助商！(如果你也支持这个项目，[√成为赞助商](https://opencollective.com/thinksns-plus#sponsor))
-
-<a href="https://opencollective.com/thinksns-plus/sponsor/0/website" target="_blank"><img src="https://opencollective.com/thinksns-plus/sponsor/0/avatar.svg"></a>
-<a href="https://opencollective.com/thinksns-plus/sponsor/1/website" target="_blank"><img src="https://opencollective.com/thinksns-plus/sponsor/1/avatar.svg"></a>
-<a href="https://opencollective.com/thinksns-plus/sponsor/2/website" target="_blank"><img src="https://opencollective.com/thinksns-plus/sponsor/2/avatar.svg"></a>
-<a href="https://opencollective.com/thinksns-plus/sponsor/3/website" target="_blank"><img src="https://opencollective.com/thinksns-plus/sponsor/3/avatar.svg"></a>
-<a href="https://opencollective.com/thinksns-plus/sponsor/4/website" target="_blank"><img src="https://opencollective.com/thinksns-plus/sponsor/4/avatar.svg"></a>
-<a href="https://opencollective.com/thinksns-plus/sponsor/5/website" target="_blank"><img src="https://opencollective.com/thinksns-plus/sponsor/5/avatar.svg"></a>
-<a href="https://opencollective.com/thinksns-plus/sponsor/6/website" target="_blank"><img src="https://opencollective.com/thinksns-plus/sponsor/6/avatar.svg"></a>
-<a href="https://opencollective.com/thinksns-plus/sponsor/7/website" target="_blank"><img src="https://opencollective.com/thinksns-plus/sponsor/7/avatar.svg"></a>
-<a href="https://opencollective.com/thinksns-plus/sponsor/8/website" target="_blank"><img src="https://opencollective.com/thinksns-plus/sponsor/8/avatar.svg"></a>
-<a href="https://opencollective.com/thinksns-plus/sponsor/9/website" target="_blank"><img src="https://opencollective.com/thinksns-plus/sponsor/9/avatar.svg"></a>
 
 ## 优秀仓库推荐
 
