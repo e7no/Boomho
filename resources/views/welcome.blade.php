@@ -125,13 +125,14 @@
     </div>
 
     <div class="content">
-        {{--<img src="{{ asset('/plus.png') }}" align="{{ config('app.name') }}">--}}
-
-        <div class="title m-b-md">
-            {{ config('app.name') }}
-        </div>
+    {{--        <img src="{{ asset('/plus.png') }}" align="{{ config('app.name') }}">--}}
         <div class="links">
-            <a href="{{ url('/admin') }}">进入后台</a>
+            <a href="{{ url('/admin') }}">
+            <div class="title m-b-md">
+                {{--{{ config('app.name') }}--}}
+                API - destop
+            </div>
+            </a>
             {{--<a href="https://slimkit.github.io/plus-docs/">Documentation</a>--}}
             {{--<a href="https://github.com/slimkit/thinksns-plus">GitHub</a>--}}
         </div>
