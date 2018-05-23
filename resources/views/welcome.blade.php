@@ -125,7 +125,7 @@
     </div>
 
     <div class="content">
-        <img src="{{ asset('/plus.png') }}" align="{{ config('app.name') }}">
+        {{--<img src="{{ asset('/plus.png') }}" align="{{ config('app.name') }}">--}}
 
         <div class="title m-b-md">
             {{ config('app.name') }}
