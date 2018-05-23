@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 /*
  * +----------------------------------------------------------------------+
  * |                          ThinkSNS Plus                               |
@@ -18,26 +16,36 @@ declare(strict_types=1);
  * +----------------------------------------------------------------------+
  */
 
-namespace Zhiyi\Plus\Http\Controllers\Admin;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Database\Migrations\Migration;
 
-use Illuminate\Http\Request;
-use Zhiyi\Plus\Http\Controllers\Controller;
-use Zhiyi\Plus\Support\Configuration as ConfigurationRepository;
-
-class NewPaySettingController extends Controller
+class UpdateNativePayOrderPayTable extends Migration
 {
-    public function index()
+    /**
+     * Run the migrations.
+     *
+     * @return void
+     */
+    public function up()
     {
-        $data = config('newPay');
-
-        return response()->json($data, 200);
+        Schema::hasTable('native_pay_orders', function (Blueprint $table) {
+            $table->renameColumn('out-trade-no', 'out_trade_no');
+            $table->renameColumn('trade-no', 'trade_no');
+            $table->unsignedTinyInteger('from')->comment('来自那个客户端');
+            $table->dropIndex('out-trade-no');
+            $table->dropIndex('trade_no');
+            $table->index('out_trade_no');
+        });
     }
 
-    public function store(Request $request, ConfigurationRepository $config)
+    /**
+     * Reverse the migrations.
+     *
+     * @return void
+     */
+    public function down()
     {
-        $data = $request->only('wechatPay', 'alipay', 'sign');
-        $config->set('newPay', $data);
-
-        return response()->json(['message' => '操作成功'], 201);
+        Schema::dropIfExists('native_pay_orders');
     }
 }

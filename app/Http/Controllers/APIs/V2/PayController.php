@@ -21,20 +21,30 @@ declare(strict_types=1);
 namespace Zhiyi\Plus\Http\Controllers\APIs\V2;
 
 use DB;
-use Log;
 use Omnipay\Omnipay;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Zhiyi\Plus\Models\NativePayOrder;
+use Zhiyi\Plus\Http\Controllers\Controller;
 use Illuminate\Contracts\Routing\ResponseFactory;
 use Zhiyi\Plus\Models\WalletOrder as WalletOrderModel;
 use Zhiyi\Plus\Models\WalletCharge as WalletChargeModel;
+use Illuminate\Contracts\Routing\ResponseFactory as ResponseContract;
+use Illuminate\Contracts\Foundation\Application as ApplicationContract;
 
-class PayController
+class PayController extends Controller
 {
-    public function checkStatus(Request $request)
+    /*
+     * 创建支付订单
+     */
+    public function entry(Request $request, ApplicationContract $app, ResponseContract $response)
     {
-        Log::debug($request->all());
+        $type = $request->input('type');
+        if (! in_array($type, ['AlipayOrder', 'AlipayWapOrder', 'WechatOrder', 'WechatWapOrder'])) {
+            return $response->json(['message' => '非法请求'], 422);
+        }
+
+        return $app->call([$this, 'get'.$type]);
     }
 
     /**
@@ -48,15 +58,11 @@ class PayController
         $user = $request->user();
         $amount = $request->input('amount', 0);
         $from = $request->input('from');
-
+        $config = config('newPay.alipay');
         if (! $amount) {
             return $response->json(['message' => '提交的信息不完整'], 422);
         }
-        $config = array_filter(config('newPay.alipay'));
-        // 支付宝配置必须包含signType, appId, secretKey, publicKey, 缺一不可
-        if (count($config) < 4) {
-            return $response->json(['message' => '系统错误,请联系小助手'], 500);
-        }
+
         $gateWay = Omnipay::create('Alipay_AopApp');
         $gateWay->setSignType($config['signType']);
         $gateWay->setAppId($config['appId']);
@@ -64,7 +70,7 @@ class PayController
         $gateWay->setAlipayPublicKey($config['publicKey']);
         $gateWay->setNotifyUrl(config('app.url', '/ap2/v2/alipay/notify'));
 
-        $order->out_trade_no = date('YmdHis').mt_rand(1000, 9999).'Thinksns-plus';
+        $order->out_trade_no = date('YmdHis').mt_rand(1000, 9999).config('newPay.sign');
         $order->subject = '钱包充值';
         $order->content = '在'.config('app.name').'充值余额'.$amount / 100 .'元';
         $order->amount = $amount;
@@ -93,7 +99,7 @@ class PayController
                     $walletCharge->save();
                     $walletOrder->save();
 
-                    return $response->json($result->getOrderString(), 201);
+                    return $response->json(['message' => '订单创建成功', 'data' => $result->getOrderString()], 201);
                 } catch (Exception $e) {
                     DB::rollback();
 
@@ -105,12 +111,13 @@ class PayController
         return $response->json(['message' => '创建支付宝订单失败'], 422);
     }
 
-    public function getAlipayWapOrder(Request $request, ResponseFactory $response, NativePayOrder $order)
+    public function getAlipayWapOrder(Request $request, Carbon $dateTime, ResponseFactory $response, NativePayOrder $order)
     {
         $user = $request->user();
         $amount = $request->input('amount', 0);
         $redirect = $request->input('redirect', '');
         $from = intval($request->input('from', 0));
+
         $isUrl = $request->input('url', 1);
 
         if (! $amount) {
@@ -139,7 +146,7 @@ class PayController
         // 支付成功后返回地址
         $gateWay->setReturnUrl($redirect);
 
-        $order->out_trade_no = date('YmdHis').mt_rand(1000, 9999).'Thinksns-plus';
+        $order->out_trade_no = date('YmdHis').mt_rand(1000, 9999).config('app.name');
         $order->subject = '钱包充值';
         $order->content = '在'.config('app.name').'充值余额'.$amount / 100 .'元';
         $order->type = 'alipay';
@@ -180,7 +187,7 @@ class PayController
         return $response->json(['message' => '创建支付宝订单失败'], 422);
     }
 
-    /**
+    /**=
      * 支付宝通知方法.
      * @Author   Wayne
      * @DateTime 2018-05-14
@@ -197,6 +204,14 @@ class PayController
         if (count($config) < 4) {
             die('fail');
         }
+        $order = $orderModel->where('out_trade_no', $data['out_trade_no'])
+            ->first();
+        if (! $order || $order->status === 1) {
+            die('fail');
+        }
+        if ($order->amount != $data['total_amount'] * 100) {
+            return $response->json(['message' => '订单金额有误，请联系小助手'], 422);
+        }
         $gateWay = Omnipay::create('Alipay_AopApp');
         // 签名方法
         $gateWay->setSignType($config['signType']);
@@ -212,26 +227,13 @@ class PayController
         try {
             $response = $res->send();
             if ($response->isPaid()) {
-                $order = $orderModel->where('out_trade_no', $data['out_trade_no'])
-                    ->first();
-                if (! $order || $order->status === 1) {
-                    die('fail');
-                }
+                $this->resolveNativePayOrder($order, $data);
                 $walletOrder = WalletOrderModel::where('target_id', $order->id)->first();
                 if ($walletOrder) {
-                    $walletOrder->target_id = $data['trade_no'];
-                    $walletOrder->state = 1;
+                    $this->resolveWalletOrder($walletOrder, $data);
                 }
-                $order->status = 1;
-                $order->trade_no = $data['trade_no'];
-                $order->save();
-                $order->walletCharge->status = 1;
-                $order->walletCharge->transaction_no = $data['trade_no'];
-                $order->walletCharge->account = $data['buyer_id'];
-                $order->walletCharge->save();
-                $walletOrder->save();
-                $order->user->newWallet()->increment('balance', $order->amount);
-                $order->user->newWallet()->increment('total_income', $order->amount);
+                $this->resolveWalletCharge($order->walletCharge, $data);
+                $this->resolveUserWallet($order);
                 die('success');
             } else {
                 die('fail');
@@ -241,14 +243,71 @@ class PayController
         }
     }
 
-    public function getOrder(NativePayOrder $order, ResponseFactory $response)
+    public function checkAlipayOrder(Request $request, ResponseFactory $response, WalletOrderModel $orderModel, WalletChargeModel $chargeModel, NativePayOrder $nativePayOrder)
     {
-        $order->load('user', 'walletCharge');
+        $memo = $request->input('memo');
+        $result = $request->input('result');
+        $resultFormat = json_decode($result, true);
+        $out_trade_no = $resultFormat['alipay_trade_app_pay_response']['out_trade_no'];
+        // 验证订单合法性
+        if (! $out_trade_no) {
+            return $response->json(['message' => '充值信息有误'], 422);
+        }
+        $order = $nativePayOrder->where('out_trade_no', $out_trade_no)
+            ->first();
+        if (! $order) {
+            return $response->json(['message' => '订单不存在'], 404);
+        }
+        if ($order->amount != $resultFormat['alipay_trade_app_pay_response']['total_amount'] * 100) {
+            return $response->json(['message' => '订单金额有误，请联系小助手'], 422);
+        }
+        // 已经通过异步通知处理了
+        if ($order->status === 1) {
+            return $response->json(['message' => '充值成功'], 200);
+        }
+        if ($order->status === 2) {
+            return $response->json(['message' => '充值失败'], 200);
+        }
+        $config = config('newPay.alipay');
+        $resultStatus = $request->input('resultStatus');
+        $gateWay = Omnipay::create('Alipay_AopApp');
+        // 签名方法
+        $gateWay->setSignType($config['signType']);
+        // appId
+        $gateWay->setAppId($config['appId']);
+        // 密钥
+        $gateWay->setPrivateKey($config['secretKey']);
+        // 公钥
+        $gateWay->setAlipayPublicKey($config['alipayKey']);
 
-        return $response->json($order, 200);
+        $res = $gateWay->completePurchase();
+        $res->setParams([
+            'memo' => $memo,
+            'result' => $result,
+            'resultStatus' => $resultStatus,
+        ]);
+        $walletOrder = WalletOrderModel::where('target_id', $order->id)->first();
+
+        try {
+            $callback = $res->send();
+            if ($callback->isPaid()) {
+                $this->resolveNativePayOrder($order, $resultFormat['alipay_trade_app_pay_response']);
+                if ($walletOrder) {
+                    $this->resolveWalletOrder($walletOrder, $resultFormat['alipay_trade_app_pay_response']);
+                }
+                $this->resolveWalletCharge($order->walletCharge, $resultFormat['alipay_trade_app_pay_response']);
+                $this->resolveUserWallet($order);
+
+                return $response->json(['message' => '充值成功'], 201);
+            } else {
+                return $response->json(['message' => '充值处理中'], 202);
+            }
+        } catch (Exception $e) {
+            return $response->json(['message' => '充值结果未知，请等待'], 202);
+        }
     }
 
-    /**
+    /**=
      * @param Request  $request
      * @param Carbon   $dateTime
      * @param Response $response
@@ -259,26 +318,35 @@ class PayController
         $user = $request->user();
         $amount = $request->input('amount', 0);
         $from = $request->input('from');
-
+        $config = array_filter(config('newPay.wechatPay'));
+        // 微信配置必须包含, appId, apiKey, mchId, 缺一不可
+        if (count($config) < 3) {
+            return $response->json(['message' => '系统错误,请联系小助手'], 500);
+        }
         if (! $amount) {
             return $response->json(['message' => '提交的信息不完整'], 422);
         }
+        if ($from != 3 && $from != 4) {
+            return $response->json(['message' => '请求来源非法'], 403);
+        }
 
         $gateWay = Omnipay::create('WechatPay_App');
-        $gateWay->setAppId('wx970d230ad5ab3b23');
-        $gateWay->setApiKey('IbcUF7KWIG7dklsx9O9n7eF2I6LS29WS');
-        $gateWay->setMchId('1486014122');
-        $gateWay->setNotifyUrl('http://test-plus.zhibocloud.cn/ssh/wechat');
+        $gateWay->setAppId($config['appId']);
+        $gateWay->setApiKey($config['apiKey']);
+        $gateWay->setMchId($config['mchId']);
+        $gateWay->setNotifyUrl(config('app.url').'/api/v2/wechat/notify');
 
-        $order->out_trade_no = date('YmdHis').mt_rand(1000, 9999).'Thinksns-plus';
+        $order->out_trade_no = date('YmdHis').mt_rand(1000, 9999).config('newPay.sign');
         $order->subject = '钱包充值';
         $order->content = '在'.config('app.name').'充值余额'.$amount / 100 .'元';
+
         $order->amount = $amount;
         $order->product_code = 'APP';
         $order->user_id = $user->id;
         $order->from = $from;
         $order->type = 'wechat';
         $walletCharge = $this->createChargeModel($request, 'Wechat-Native');
+        $walletOrder = $this->createOrderModel($user->id, intval($amount), 'Wechat-Alipay', $order->subject);
         $wechatOrder = [
             'body'              => $order->content,
             'out_trade_no'      => $order->out_trade_no,
@@ -291,9 +359,11 @@ class PayController
         if ($request->isSuccessful()) {
             $order->save();
             $walletCharge->charge_id = $order->id;
+            $walletOrder->target_id = $order->id;
             $walletCharge->save();
+            $walletOrder->save();
 
-            return $response->json($request->getAppOrderData(), 201);
+            return $response->json(['message' => '订单创建成功', 'data' => $request->getAppOrderData()], 201);
         }
 
         return $response->json(['message' => '创建微信订单失败'], 422);
@@ -310,43 +380,105 @@ class PayController
         $user = $request->user();
         $amount = $request->input('amount', 0);
         $from = $request->input('from');
-
+        $openId = $request->input('openId', '');
+        $config = array_filter(config('newPay.wechatPay'));
+        if (! $openId) {
+            return $response->json(['message' => '系统错误,请联系小助手'], 500);
+        }
+        // 微信配置必须包含, appId, apiKey, mchId, 缺一不可
+        if (count($config) < 3) {
+            return $response->json(['message' => '系统错误,请联系小助手'], 500);
+        }
         if (! $amount) {
             return $response->json(['message' => '提交的信息不完整'], 422);
         }
 
-        $gateWay = Omnipay::create('WechatPay_Js');
-        $gateWay->setAppId('wx970d230ad5ab3b23');
-        $gateWay->setApiKey('IbcUF7KWIG7dklsx9O9n7eF2I6LS29WS');
-        $gateWay->setMchId('1486014122');
-        $gateWay->setNotifyUrl('http://test-plus.zhibocloud.cn/ssh/wechat');
+        if ($from != 1 && $from != 2) {
+            return $response->json(['message' => '请求来源非法'], 403);
+        }
 
-        $order->out_trade_no = date('YmdHis').mt_rand(1000, 9999).'Thinksns-plus';
+        $gateWay = Omnipay::create('WechatPay_Js');
+        $gateWay->setAppId($config['appId']);
+        $gateWay->setApiKey($config['apiKey']);
+        $gateWay->setMchId($config['mchId']);
+        $gateWay->setNotifyUrl(config('app.url').'/api/v2/wechat/notify');
+
+        $order->out_trade_no = date('YmdHis').mt_rand(1000, 9999).config('newPay.sign');
         $order->subject = '钱包充值';
         $order->content = '在'.config('app.name').'充值余额'.$amount / 100 .'元';
+
         $order->amount = $amount;
         $order->product_code = 'JSAPI';
         $order->user_id = $user->id;
         $order->from = $from;
         $order->type = 'wechat';
         $walletCharge = $this->createChargeModel($request, 'Wechat-Native');
+        $walletOrder = $this->createOrderModel($user->id, intval($amount), 'Wechat-Alipay', $order->subject);
         $wechatOrder = [
             'body'              => $order->content,
             'out_trade_no'      => $order->out_trade_no,
             'total_fee'         => $amount,
             'spbill_create_ip'  => $request->getClientIp(),
             'fee_type'          => 'CNY',
+            'openid'           => $openId,
         ];
         $request = $gateWay->purchase($wechatOrder)->send();
 
         if ($request->isSuccessful()) {
             $order->save();
-            $walletCharge->save();
 
-            return $response->json($request->getJsOrderData(), 201);
+            $walletCharge->charge_id = $order->id;
+            $walletOrder->target_id = $order->id;
+            $walletCharge->save();
+            $walletOrder->save();
+
+            return $response->json(['message' => '订单创建成功', 'data' => $request->getJsOrderData()], 201);
         }
 
         return $response->json(['message' => '创建微信订单失败'], 422);
+    }
+
+    public function wechatNotify(WalletChargeModel $walletChargeModel, WalletOrderModel $walletOrderModel, NativePayOrder $orderModel, ResponseFactory $response)
+    {
+        $data = file_get_contents('php://input');
+        $config = array_filter(config('newPay.wechatPay'));
+        // 微信配置必须包含, appId, apiKey, mchId, 缺一不可
+        if (count($config) < 3) {
+            return $response->json(['message' => '系统错误,请联系小助手'], 500);
+        }
+        $gateway = Omnipay::create('WechatPay_App');
+        $gateway->setAppId($config['appId']);
+        $gateway->setMchId($config['mchId']);
+        $gateway->setApiKey($config['apiKey']);
+
+        $res = $gateway->completePurchase([
+            'request_params' => $data,
+        ])->send();
+        if ($res->isPaid()) {
+            $requestData = $res->getRequestData();
+            $payOrder = $orderModel->where('out_trade_no', $requestData['out_trade_no'])
+                ->first();
+            if (! $payOrder || ($payOrder->amount != $requestData['total_fee'])) {
+                die('<xml><return_code><![CDATA[SUCCESS]]></return_code></xml>');
+            }
+            $walletOrder = $walletOrderModel->where('target_id', $payOrder->id)
+                ->first();
+            $data = [
+                'trade_no' => $requestData['transaction_id'],
+                'buyer_id' => $requestData['openid'],
+            ];
+
+            $this->resolveNativePayOrder($payOrder, $data);
+            $this->resolveWalletCharge($payOrder->walletCharge, $data);
+            $this->resolveUserWallet($payOrder);
+            if ($walletOrder) {
+                $this->resolveWalletOrder($walletOrder, $data);
+            }
+
+            die('<xml><return_code><![CDATA[SUCCESS]]></return_code></xml>');
+        } else {
+            die('<xml><return_code><![CDATA[FAIL]]></return_code></xml>');
+        }
     }
 
     protected function createChargeModel(Request $request, string $channel): WalletChargeModel
@@ -376,5 +508,33 @@ class PayController
         $order->state = 0;
 
         return $order;
+    }
+
+    protected function resolveNativePayOrder(NativePayOrder $order, $data)
+    {
+        $order->status = 1;
+        $order->trade_no = $data['trade_no'];
+        $order->save();
+    }
+
+    protected function resolveWalletCharge(WalletChargeModel $order, $data)
+    {
+        $order->status = 1;
+        $order->transaction_no = $data['trade_no'];
+        $order->account = $data['buyer_id'] ?? '';
+        $order->save();
+    }
+
+    protected function resolveWalletOrder(WalletOrderModel $order, $data)
+    {
+        $order->target_id = $data['trade_no'];
+        $order->state = 1;
+        $order->save();
+    }
+
+    protected function resolveUserWallet(NativePayOrder $order)
+    {
+        $order->user->newWallet()->increment('balance', $order->amount);
+        $order->user->newWallet()->increment('total_income', $order->amount);
     }
 }

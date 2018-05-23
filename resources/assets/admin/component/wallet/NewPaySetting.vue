@@ -79,12 +79,21 @@
         </div>
         <!-- local private key -->
         <div class="form-group">
-          <label class="col-sm-2 control-label">支付宝公钥</label>
+          <label class="col-sm-2 control-label">支付宝应用公钥</label>
           <div class="col-sm-4">
-            <textarea placeholder="填写支付宝管理页面设置的公钥" class="form-control" rows="4"  v-model="alipayPublicKey"></textarea>
+            <textarea placeholder="填写支付宝管理页面设置的应用公钥" class="form-control" rows="4"  v-model="alipayPublicKey"></textarea>
           </div>
           <span class="col-sm-6 help-block">
-            填写支付宝管理页面设置的公钥
+            填写支付宝管理页面设置的应用公钥
+          </span>
+        </div>
+        <div class="form-group">
+          <label class="col-sm-2 control-label">支付宝公钥</label>
+          <div class="col-sm-4">
+            <textarea placeholder="填写支付宝管理页面设置的支付宝公钥" class="form-control" rows="4"  v-model="alipayAliPayKey"></textarea>
+          </div>
+          <span class="col-sm-6 help-block">
+            填写支付宝管理页面设置的支付宝公钥
           </span>
         </div>
         <div class="form-group">
@@ -94,6 +103,19 @@
           </div>
           <span class="col-sm-6 help-block">
             填写支付宝管理页面设置的密钥
+          </span>
+        </div>
+        <hr>
+        <blockquote>
+          <p>内部订单识别标识</p>
+        </blockquote>
+        <div class="form-group">
+          <label class="col-sm-2 control-label">支付宝密钥</label>
+          <div class="col-sm-4">
+            <input placeholder="填写内部订单标识" class="form-control" rows="4" v-model="outTradeNoSign" />
+          </div>
+          <span class="col-sm-6 help-block">
+            填写内部订单标识，默认是时间+4位随机字符，标识填写请参考支付宝以及微信的内部订单号标识为准
           </span>
         </div>
 
@@ -145,8 +167,10 @@ export default {
         appId: "",
         publicKey: "",
         secretKey: "",
-        signType: "RSA2"
-      }
+        signType: "RSA2",
+          alipayAlipayKey: ""
+      },
+        sign: ""
     },
     alert: {
       status: false,
@@ -169,9 +193,9 @@ export default {
     },
     storeSetting() {
       const {
-        config: { wechatPay, alipay }
+        config: { wechatPay, alipay, sign}
       } = this;
-      const params = { wechatPay, alipay };
+      const params = { wechatPay, alipay, sign };
       request
         .post(createRequestURI("wallet/newPaySetting"), {
           ...params,
@@ -251,6 +275,16 @@ export default {
         this.config = { ...this.config, alipay };
       }
     },
+      alipayAliPayKey: {
+        get: function() {
+            return this.alipay.alipayKey || "";
+        },
+          set: function(alipayKey) {
+              const alipay = this.config.alipay || {};
+              alipay.alipayKey = alipayKey;
+              this.config = { ...this.config, alipay };
+          }
+      },
     alipaySecretKey: {
       get: function() {
         return this.alipay.secretKey || "";
@@ -260,7 +294,15 @@ export default {
         alipay.secretKey = secretKey;
         this.config = { ...this.config, alipay };
       }
-    }
+    },
+      outTradeNoSign: {
+          get: function() {
+              return this.config.sign || "";
+          },
+          set: function(sign) {
+              this.config.sign = sign;
+          }
+      }
   },
   created() {
     this.getSetting();
