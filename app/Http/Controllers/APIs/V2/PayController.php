@@ -29,6 +29,7 @@ use Zhiyi\Plus\Http\Controllers\Controller;
 use Illuminate\Contracts\Routing\ResponseFactory;
 use Zhiyi\Plus\Models\WalletOrder as WalletOrderModel;
 use Zhiyi\Plus\Models\WalletCharge as WalletChargeModel;
+use Zhiyi\Plus\Models\CurrencyOrder as CurrencyOrderModel;
 use Illuminate\Contracts\Routing\ResponseFactory as ResponseContract;
 use Illuminate\Contracts\Foundation\Application as ApplicationContract;
 
@@ -88,6 +89,7 @@ class PayController extends Controller
             'product_code' => $order->product_code,
             'body' => $order->content,
             'timeout_express' => '10m',
+            'charge_type' => 'wallet',
         ])->send();
 
         if ($result->isSuccessful()) {
@@ -146,7 +148,7 @@ class PayController extends Controller
         // 支付成功后返回地址
         $gateWay->setReturnUrl($redirect);
 
-        $order->out_trade_no = date('YmdHis').mt_rand(1000, 9999).config('app.name');
+        $order->out_trade_no = date('YmdHis').mt_rand(1000, 9999).config('newPay.sign');
         $order->subject = '钱包充值';
         $order->content = '在'.config('app.name').'充值余额'.$amount / 100 .'元';
         $order->type = 'alipay';
@@ -164,6 +166,7 @@ class PayController extends Controller
             'product_code' => $order->product_code,
             'body' => $order->content,
             'timeout_express' => '10m',
+            'charge_type' => 'wallet',
         ])->send();
 
         if ($result->isSuccessful()) {
@@ -220,7 +223,7 @@ class PayController extends Controller
         // 密钥
         $gateWay->setPrivateKey($config['secretKey']);
         // 公钥
-        $gateWay->setAlipayPublicKey($config['publicKey']);
+        $gateWay->setAlipayPublicKey($config['alipayKey']);
 
         $res = $gateWay->completePurchase();
         $res->setParams($_POST);
@@ -228,12 +231,25 @@ class PayController extends Controller
             $response = $res->send();
             if ($response->isPaid()) {
                 $this->resolveNativePayOrder($order, $data);
-                $walletOrder = WalletOrderModel::where('target_id', $order->id)->first();
-                if ($walletOrder) {
-                    $this->resolveWalletOrder($walletOrder, $data);
+                $type = 'currency';
+                $orderUnknow = ChargeOrderModel::where('target_id', $order->id)->first();
+                if (! $orderUnknow) {
+                    $type = 'wallet';
+                    $orderUnknow = WalletOrderModel::where('target_id', $order->id)->first();
                 }
+                // 钱包充值
+                if ($type === 'wallet' && $orderUnknow) {
+                    $this->resolveWalletOrder($orderUnknow, $data);
+                    $this->resolveUserWallet($order);
+                }
+                // 积分充值
+                if ($type === 'currency' && $orderUnknow) {
+                    $this->resolveCurrencyOrder($orderUnknow, $data);
+                    $this->resolveUserCurrency($order);
+                }
+
                 $this->resolveWalletCharge($order->walletCharge, $data);
-                $this->resolveUserWallet($order);
+
                 die('success');
             } else {
                 die('fail');
@@ -243,7 +259,7 @@ class PayController extends Controller
         }
     }
 
-    public function checkAlipayOrder(Request $request, ResponseFactory $response, WalletOrderModel $orderModel, WalletChargeModel $chargeModel, NativePayOrder $nativePayOrder)
+    public function checkAlipayOrder(Request $request, ResponseFactory $response, NativePayOrder $nativePayOrder)
     {
         $memo = $request->input('memo');
         $result = $request->input('result');
@@ -286,17 +302,27 @@ class PayController extends Controller
             'result' => $result,
             'resultStatus' => $resultStatus,
         ]);
-        $walletOrder = WalletOrderModel::where('target_id', $order->id)->first();
-
+        $type = 'currency';
+        $orderUnknow = CurrencyOrderModel::where('target_id', $order->id)->first();
+        if (! $orderUnknow) {
+            $type = 'wallet';
+            $orderUnknow = WalletOrderModel::where('target_id', $order->id)->first();
+        }
         try {
             $callback = $res->send();
             if ($callback->isPaid()) {
                 $this->resolveNativePayOrder($order, $resultFormat['alipay_trade_app_pay_response']);
-                if ($walletOrder) {
-                    $this->resolveWalletOrder($walletOrder, $resultFormat['alipay_trade_app_pay_response']);
+                // 钱包充值
+                if ($type === 'wallet' && $orderUnknow) {
+                    $this->resolveWalletOrder($orderUnknow, $resultFormat['alipay_trade_app_pay_response']);
+                    $this->resolveUserWallet($order);
+                }
+                // 积分充值
+                if ($type === 'currency' && $orderUnknow) {
+                    $this->resolveCurrencyOrder($orderUnknow, $resultFormat['alipay_trade_app_pay_response']);
+                    $this->resolveUserCurrency($order);
                 }
                 $this->resolveWalletCharge($order->walletCharge, $resultFormat['alipay_trade_app_pay_response']);
-                $this->resolveUserWallet($order);
 
                 return $response->json(['message' => '充值成功'], 201);
             } else {
@@ -525,6 +551,13 @@ class PayController extends Controller
         $order->save();
     }
 
+    protected function resolveCurrencyOrder(CurrencyOrderModel $order, $data)
+    {
+        $order->target_id = $data['trade_no'];
+        $order->state = 1;
+        $order->save();
+    }
+
     protected function resolveWalletOrder(WalletOrderModel $order, $data)
     {
         $order->target_id = $data['trade_no'];
@@ -536,5 +569,10 @@ class PayController extends Controller
     {
         $order->user->newWallet()->increment('balance', $order->amount);
         $order->user->newWallet()->increment('total_income', $order->amount);
+    }
+
+    protected function resolveUserCurrency(NativePayOrder $order)
+    {
+        $order->user->currency()->increment('sum', $order->amount);
     }
 }

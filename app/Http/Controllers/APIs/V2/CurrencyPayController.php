@@ -85,11 +85,11 @@ class CurrencyPayController extends Controller
         $gateWay->setAppId($config['appId']);
         $gateWay->setPrivateKey($config['secretKey']);
         $gateWay->setAlipayPublicKey($config['publicKey']);
-        $gateWay->setNotifyUrl(config('app.url', '/ap2/v2/alipay/notify'));
+        $gateWay->setNotifyUrl(config('app.url', '/api/v2/alipayCurrency/notify'));
 
         $order->out_trade_no = date('YmdHis').mt_rand(1000, 9999).config('newPay.sign');
         $order->subject = '积分充值';
-        $order->content = sprintf('在%s充值积分：%d', $config('app.name'), $amount * $this->ratio);
+        $order->content = sprintf('在%s充值积分：%d', config('app.name'), $amount * $this->ratio);
         $order->amount = $amount;
         $order->product_code = 'FAST_INSTANT_TRADE_PAY';
         $order->user_id = $user->id;
@@ -105,6 +105,7 @@ class CurrencyPayController extends Controller
             'product_code' => $order->product_code,
             'body' => $order->content,
             'timeout_express' => '10m',
+            'charge_type' => 'currency',
         ])->send();
 
         if ($result->isSuccessful()) {
@@ -159,11 +160,11 @@ class CurrencyPayController extends Controller
         // 公钥
         $gateWay->setAlipayPublicKey($config['publicKey']);
         // 通知地址
-        $gateWay->setNotifyUrl(config('app.url').'/api/v2/alipay/notify');
+        $gateWay->setNotifyUrl(config('app.url').'/api/v2/alipayCurrency/notify');
         // 支付成功后返回地址
         $gateWay->setReturnUrl($redirect);
 
-        $order->out_trade_no = date('YmdHis').mt_rand(1000, 9999).config('app.name');
+        $order->out_trade_no = date('YmdHis').mt_rand(1000, 9999).config('newPay.sign');
         $order->subject = '积分充值';
         $order->content = sprintf('在%s充值积分%d', config('app.name'), $amount * $this->ratio);
         $order->type = 'alipay';
@@ -181,6 +182,7 @@ class CurrencyPayController extends Controller
             'product_code' => $order->product_code,
             'body' => $order->content,
             'timeout_express' => '10m',
+            'charge_type' => 'currency',
         ])->send();
 
         if ($result->isSuccessful()) {
@@ -237,7 +239,7 @@ class CurrencyPayController extends Controller
         // 密钥
         $gateWay->setPrivateKey($config['secretKey']);
         // 公钥
-        $gateWay->setAlipayPublicKey($config['publicKey']);
+        $gateWay->setAlipayPublicKey($config['alipayKey']);
 
         $res = $gateWay->completePurchase();
         $res->setParams($_POST);
@@ -260,7 +262,7 @@ class CurrencyPayController extends Controller
         }
     }
 
-    public function checkAlipayOrder(Request $request, ResponseFactory $response, CurrencyOrderModel $orderModel, WalletChargeModel $chargeModel, NativePayOrder $nativePayOrder)
+    public function checkAlipayOrder(Request $request, ResponseFactory $response, CurrencyOrderModel $orderModel, NativePayOrder $nativePayOrder)
     {
         $memo = $request->input('memo');
         $result = $request->input('result');
@@ -352,7 +354,7 @@ class CurrencyPayController extends Controller
         $gateWay->setAppId($config['appId']);
         $gateWay->setApiKey($config['apiKey']);
         $gateWay->setMchId($config['mchId']);
-        $gateWay->setNotifyUrl(config('app.url').'/api/v2/wechat/notify');
+        $gateWay->setNotifyUrl(config('app.url').'/api/v2/wechatCurrency/notify');
 
         $order->out_trade_no = date('YmdHis').mt_rand(1000, 9999).config('newPay.sign');
         $order->subject = '积分充值';
@@ -418,7 +420,7 @@ class CurrencyPayController extends Controller
         $gateWay->setAppId($config['appId']);
         $gateWay->setApiKey($config['apiKey']);
         $gateWay->setMchId($config['mchId']);
-        $gateWay->setNotifyUrl(config('app.url').'/api/v2/wechat/notify');
+        $gateWay->setNotifyUrl(config('app.url').'/api/v2/wechatCurrency/notify');
 
         $order->out_trade_no = date('YmdHis').mt_rand(1000, 9999).config('newPay.sign');
         $order->subject = '积分充值';

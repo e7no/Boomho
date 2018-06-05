@@ -76,7 +76,7 @@ class RewardNewsTest extends TestCase
     public function testNewRewardNews()
     {
         $other = factory(UserModel::class)->create();
-        $other->newWallet()->increment('balance', 1000);
+        $other->currency()->increment('sum', 100);
 
         $response = $this
             ->actingAs($other, 'api')

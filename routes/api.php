@@ -52,8 +52,13 @@ Route::group(['prefix' => 'v2'], function (RouteContract $api) {
 
     $api->post('/currency/webhooks', API2\CurrencyRechargeController::class.'@webhook');
 
+    // 钱包充值验证
     $api->post('/alipay/notify', API2\PayController::class.'@alipayNotify');
     $api->post('/wechat/notify', API2\PayController::class.'@wechatNotify');
+
+    // 积分充值验证
+    $api->post('/alipayCurrency/notify', API2\CurrencyPayController::class.'@alipayNotify');
+    $api->post('/wechatCurrency/notify', API2\CurrencyPayController::class.'@wechatNotify');
     /*
     | 应用启动配置.
     */
@@ -66,12 +71,6 @@ Route::group(['prefix' => 'v2'], function (RouteContract $api) {
         $api->any('logout', API2\AuthController::class.'@logout');
         $api->any('refresh', API2\AuthController::class.'@refresh');
     });
-
-    // Create user authentication token
-    $api->post('/tokens', API2\TokenController::class.'@store');
-
-    // Refresh token
-    $api->patch('/tokens/{token}', API2\TokenController::class.'@refresh');
 
     // Search location.
     $api->get('/locations/search', API2\LocationController::class.'@search');
