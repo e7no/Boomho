@@ -30,7 +30,7 @@ class Application extends LaravelApplication
      *
      * @var string
      */
-    const VERSION = '1.8.0';
+    const VERSION = '1.9.0';
 
     /**
      * The core vendor YAML file.
@@ -100,7 +100,13 @@ class Application extends LaravelApplication
      */
     public function vendorYamlFilePath(): string
     {
-        return $this->environmentPath().DIRECTORY_SEPARATOR.$this->vendorYamlFile();
+        return $this->storagePath()
+            .DIRECTORY_SEPARATOR
+            .'app'
+            .DIRECTORY_SEPARATOR
+            .'config'
+            .DIRECTORY_SEPARATOR
+            .$this->vendorYamlFile();
     }
 
     /**
