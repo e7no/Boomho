@@ -4,7 +4,7 @@
  * +----------------------------------------------------------------------+
  * |                          ThinkSNS Plus                               |
  * +----------------------------------------------------------------------+
- * | Copyright (c) 2017 Chengdu ZhiYiChuangXiang Technology Co., Ltd.     |
+ * | Copyright (c) 2018 Chengdu ZhiYiChuangXiang Technology Co., Ltd.     |
  * +----------------------------------------------------------------------+
  * | This source file is subject to version 2.0 of the Apache license,    |
  * | that is bundled with this package in the file LICENSE, and is        |
@@ -34,7 +34,7 @@ return [
     'after'                => 'The :attribute must be a date after :date.',
     'after_or_equal'       => 'The :attribute must be a date after or equal to :date.',
     'alpha'                => 'The :attribute may only contain letters.',
-    'alpha_dash'           => 'The :attribute may only contain letters, numbers, and dashes.',
+    'alpha_dash'           => 'The :attribute may only contain letters, numbers, dashes and underscores.',
     'alpha_num'            => 'The :attribute may only contain letters and numbers.',
     'array'                => 'The :attribute must be an array.',
     'before'               => 'The :attribute must be a date before :date.',

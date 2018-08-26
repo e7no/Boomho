@@ -6,7 +6,7 @@ declare(strict_types=1);
  * +----------------------------------------------------------------------+
  * |                          ThinkSNS Plus                               |
  * +----------------------------------------------------------------------+
- * | Copyright (c) 2017 Chengdu ZhiYiChuangXiang Technology Co., Ltd.     |
+ * | Copyright (c) 2018 Chengdu ZhiYiChuangXiang Technology Co., Ltd.     |
  * +----------------------------------------------------------------------+
  * | This source file is subject to version 2.0 of the Apache license,    |
  * | that is bundled with this package in the file LICENSE, and is        |
@@ -92,9 +92,10 @@ class UserCertification extends FormRequest
             'id.required' => '证件号未提供',
             'contact.required' => '联系方式未提供',
             'desc.required' => '认证描述未提供',
-            'desc.max' => '认证描述长度最大250',
+            'desc.max' => '认证描述长度最大 250 个字',
             'files.required' => '证件照片未提供',
-            'files.exists' => '文件不存在或已被使用',
+            'files.*.required_with' => '非法提交',
+            'files.*.exists' => '文件不存在或已被使用',
         ];
 
         return $this->input('certification') === 'enterprise_certification'

@@ -6,7 +6,7 @@ declare(strict_types=1);
  * +----------------------------------------------------------------------+
  * |                          ThinkSNS Plus                               |
  * +----------------------------------------------------------------------+
- * | Copyright (c) 2017 Chengdu ZhiYiChuangXiang Technology Co., Ltd.     |
+ * | Copyright (c) 2018 Chengdu ZhiYiChuangXiang Technology Co., Ltd.     |
  * +----------------------------------------------------------------------+
  * | This source file is subject to version 2.0 of the Apache license,    |
  * | that is bundled with this package in the file LICENSE, and is        |
@@ -46,12 +46,20 @@ class CommentPinnedController extends Controller
         $limit = $request->query('limit', 15);
         $after = $request->query('after');
 
+        $grammar = $model->getConnection()->getQueryGrammar();
         $pinneds = $model->with('comment')
             ->where('channel', 'news:comment')
             ->where('target_user', $user->id)
             ->when(boolval($after), function ($query) use ($after) {
                 return $query->where('id', '<', $after);
             })
+            ->orderByRaw(str_replace('{state}', $grammar->wrap('state'), '
+                CASE
+                    WHEN ({state} = 0) THEN 1
+                    WHEN ({state} != 0 ) THEN 2
+                END ASC
+            '))
+            ->orderBy('created_at', 'desc')
             ->orderBy('id', 'desc')
             ->limit($limit)
             ->get();

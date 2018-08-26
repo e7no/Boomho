@@ -6,7 +6,7 @@ declare(strict_types=1);
  * +----------------------------------------------------------------------+
  * |                          ThinkSNS Plus                               |
  * +----------------------------------------------------------------------+
- * | Copyright (c) 2017 Chengdu ZhiYiChuangXiang Technology Co., Ltd.     |
+ * | Copyright (c) 2018 Chengdu ZhiYiChuangXiang Technology Co., Ltd.     |
  * +----------------------------------------------------------------------+
  * | This source file is subject to version 2.0 of the Apache license,    |
  * | that is bundled with this package in the file LICENSE, and is        |
@@ -32,7 +32,12 @@ class UserLikeController extends Controller
         $after = $request->query('after', false);
         $user = $request->user();
 
-        $likes = $model->with(['likeable', 'user'])
+        $likes = $model->with([
+                'likeable',
+                'user' => function ($query) {
+                    return $query->withTrashed();
+                },
+            ])
             ->where('target_user', $user->id)
             ->when($after, function ($query) use ($after) {
                 return $query->where('id', '<', $after);

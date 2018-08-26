@@ -6,7 +6,7 @@ declare(strict_types=1);
  * +----------------------------------------------------------------------+
  * |                          ThinkSNS Plus                               |
  * +----------------------------------------------------------------------+
- * | Copyright (c) 2017 Chengdu ZhiYiChuangXiang Technology Co., Ltd.     |
+ * | Copyright (c) 2018 Chengdu ZhiYiChuangXiang Technology Co., Ltd.     |
  * +----------------------------------------------------------------------+
  * | This source file is subject to version 2.0 of the Apache license,    |
  * | that is bundled with this package in the file LICENSE, and is        |
@@ -20,9 +20,8 @@ declare(strict_types=1);
 
 namespace Zhiyi\Plus\Providers;
 
-use Zhiyi\Plus\Models as Models;
-use Zhiyi\Plus\Observers as Observers;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Database\Eloquent\Relations\Relation;
 
 class EloquentServiceProvider extends ServiceProvider
 {
@@ -33,7 +32,9 @@ class EloquentServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        Models\Comment::observe(Observers\CommentObserver::class);
+        \Zhiyi\Plus\Models\Comment::observe(
+            \Zhiyi\Plus\Observers\CommentObserver::class
+        );
     }
 
     /**
@@ -43,6 +44,33 @@ class EloquentServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        $this->registerMorpMap();
+    }
+
+    /**
+     * Register model morp map.
+     *
+     * @return void
+     * @author Seven Du <shiweidu@outlook.com>
+     */
+    protected function registerMorpMap()
+    {
+        $types = $this->app->make(\Zhiyi\Plus\Types\Models::class);
+        $this->setMorphMap(
+            $types->all(\Zhiyi\Plus\Types\Models::KEY_BY_CLASS_ALIAS)
+        );
+    }
+
+    /**
+     * Set the morph map for polymorphic relations.
+     *
+     * @param array|null $map
+     * @param bool|bool $merge
+     * @return array
+     * @author Seven Du <shiweidu@outlook.com>
+     */
+    private function setMorphMap(array $map = null, bool $merge = true)
+    {
+        return Relation::morphMap($map, $merge);
     }
 }

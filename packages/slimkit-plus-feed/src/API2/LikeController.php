@@ -6,7 +6,7 @@ declare(strict_types=1);
  * +----------------------------------------------------------------------+
  * |                          ThinkSNS Plus                               |
  * +----------------------------------------------------------------------+
- * | Copyright (c) 2017 Chengdu ZhiYiChuangXiang Technology Co., Ltd.     |
+ * | Copyright (c) 2018 Chengdu ZhiYiChuangXiang Technology Co., Ltd.     |
  * +----------------------------------------------------------------------+
  * | This source file is subject to version 2.0 of the Apache license,    |
  * | that is bundled with this package in the file LICENSE, and is        |
@@ -88,6 +88,11 @@ class LikeController extends Controller
     public function store(Request $request, ResponseContract $response, FeedModel $feed)
     {
         $user = $request->user();
+
+        if ($feed->liked($user)) {
+            return $response->json(['message' => '操作成功'])->setStatusCode(201);
+        }
+
         $feed->like($user);
 
         if ($feed->user_id !== $user->id) {
@@ -120,6 +125,11 @@ class LikeController extends Controller
     public function destroy(Request $request, ResponseContract $response, FeedModel $feed)
     {
         $user = $request->user();
+
+        if (! $feed->liked($user)) {
+            return $response->json(['message' => '操作成功'])->setStatusCode(204);
+        }
+
         $feed->unlike($user);
 
         return $response->json(['message' => '操作成功'])->setStatusCode(204);

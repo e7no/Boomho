@@ -6,7 +6,7 @@ declare(strict_types=1);
  * +----------------------------------------------------------------------+
  * |                          ThinkSNS Plus                               |
  * +----------------------------------------------------------------------+
- * | Copyright (c) 2017 Chengdu ZhiYiChuangXiang Technology Co., Ltd.     |
+ * | Copyright (c) 2018 Chengdu ZhiYiChuangXiang Technology Co., Ltd.     |
  * +----------------------------------------------------------------------+
  * | This source file is subject to version 2.0 of the Apache license,    |
  * | that is bundled with this package in the file LICENSE, and is        |
@@ -24,7 +24,6 @@ use Zhiyi\Plus\Models\User;
 use Illuminate\Http\Request;
 use Zhiyi\Plus\Models\GoldType;
 use Zhiyi\Plus\Models\UserCount;
-use Zhiyi\Plus\Models\CommonConfig;
 use Zhiyi\Plus\Models\WalletCharge;
 use Zhiyi\Plus\Packages\Currency\Processes\User as UserProcess;
 
@@ -33,7 +32,7 @@ class UserRewardController extends Controller
     // 系统货币名称
     protected $goldName;
 
-    public function __construct(GoldType $goldModel, CommonConfig $configModel)
+    public function __construct(GoldType $goldModel)
     {
         $this->goldName = $goldModel->where('status', 1)->select('name', 'unit')->value('name') ?? '积分';
     }

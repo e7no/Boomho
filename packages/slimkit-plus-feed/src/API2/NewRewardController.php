@@ -6,7 +6,7 @@ declare(strict_types=1);
  * +----------------------------------------------------------------------+
  * |                          ThinkSNS Plus                               |
  * +----------------------------------------------------------------------+
- * | Copyright (c) 2017 Chengdu ZhiYiChuangXiang Technology Co., Ltd.     |
+ * | Copyright (c) 2018 Chengdu ZhiYiChuangXiang Technology Co., Ltd.     |
  * +----------------------------------------------------------------------+
  * | This source file is subject to version 2.0 of the Apache license,    |
  * | that is bundled with this package in the file LICENSE, and is        |
@@ -22,7 +22,6 @@ namespace Zhiyi\Component\ZhiyiPlus\PlusComponentFeed\API2;
 
 use Illuminate\Http\Request;
 use Zhiyi\Plus\Models\GoldType;
-use Zhiyi\Plus\Models\CommonConfig;
 use Zhiyi\Plus\Http\Controllers\Controller;
 use Zhiyi\Plus\Models\UserCount as UserCountModel;
 use Zhiyi\Component\ZhiyiPlus\PlusComponentFeed\Models\Feed;
@@ -39,7 +38,7 @@ class NewRewardController extends Controller
      * @param  WalletCharge $charge
      * @return mix
      */
-    public function reward(Request $request, Feed $feed, UserProcess $process, GoldType $goldModel, CommonConfig $configModel)
+    public function reward(Request $request, Feed $feed, UserProcess $process, GoldType $goldModel)
     {
         $goldName = $goldModel->where('status', 1)->select('name', 'unit')->value('name') ?? '积分';
         $this->goldName = $goldModel->where('status', 1)->select('name', 'unit')->value('name') ?? '积分';

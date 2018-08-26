@@ -6,7 +6,7 @@ declare(strict_types=1);
  * +----------------------------------------------------------------------+
  * |                          ThinkSNS Plus                               |
  * +----------------------------------------------------------------------+
- * | Copyright (c) 2017 Chengdu ZhiYiChuangXiang Technology Co., Ltd.     |
+ * | Copyright (c) 2018 Chengdu ZhiYiChuangXiang Technology Co., Ltd.     |
  * +----------------------------------------------------------------------+
  * | This source file is subject to version 2.0 of the Apache license,    |
  * | that is bundled with this package in the file LICENSE, and is        |
@@ -25,11 +25,15 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Zhiyi\Plus\Models\Like as LikeModel;
 use Zhiyi\Plus\Models\Comment as CommentModel;
+use Zhiyi\Plus\Utils\DateTimeToIso8601ZuluString;
+use Zhiyi\Plus\Models\AtMessage as AtMessageModel;
 use Zhiyi\Plus\Support\PinnedsNotificationEventer;
 use Zhiyi\Plus\Models\Conversation as ConversationModel;
 
 class UserUnreadCountController extends Controller
 {
+    use DateTimeToIso8601ZuluString;
+
     /**
      * 获取用户未读消息.
      *
@@ -100,6 +104,15 @@ class UserUnreadCountController extends Controller
             ->whereNull('read_at')
             ->count();
 
+        // at 最近三个用户
+        $atMeUsers = (new AtMessageModel)->query()
+            ->with('user')
+            ->where('user_id', $user->id)
+            ->limit(3)
+            ->orderBy('id', 'desc')
+            ->get();
+        $atLatestTimestamp = ($atMeUsersLatest = $atMeUsers->first()) ? $this->dateTimeToIso8601ZuluString($atMeUsersLatest->{AtMessageModel::CREATED_AT}) : null;
+
         $counts->system = $systemUnreadCount ?? 0;
         $result = array_filter([
             'counts' => $counts,
@@ -107,6 +120,12 @@ class UserUnreadCountController extends Controller
             'likes' => $likes,
             'pinneds' => $pinneds,
             'system' => $lastSystem,
+            'atme' => $atMeUsers->isEmpty() ? null : [
+                'users' => $atMeUsers->map(function ($item) {
+                    return $item->user->name ?? null;
+                })->filter()->all(),
+                'latest_at' => $atLatestTimestamp,
+            ],
         ], function ($item) {
             if (is_null($item)) {
                 return false;

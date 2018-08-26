@@ -4,7 +4,7 @@
  * +----------------------------------------------------------------------+
  * |                          ThinkSNS Plus                               |
  * +----------------------------------------------------------------------+
- * | Copyright (c) 2017 Chengdu ZhiYiChuangXiang Technology Co., Ltd.     |
+ * | Copyright (c) 2018 Chengdu ZhiYiChuangXiang Technology Co., Ltd.     |
  * +----------------------------------------------------------------------+
  * | This source file is subject to version 2.0 of the Apache license,    |
  * | that is bundled with this package in the file LICENSE, and is        |
@@ -133,6 +133,13 @@ class AbilitySeeder extends Seeder
             'name' => 'admin:notice:send',
             'display_name' => '系统通知-发送',
             'description' => '系统通知发送系统通知权限',
+        ]);
+
+        // 编辑话题权限
+        Ability::create([
+            'name' => 'admin: update feed topic',
+            'display_name' => '动态»话题»编辑话题',
+            'description' => '修改动态话题',
         ]);
     }
 

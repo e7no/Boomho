@@ -6,7 +6,7 @@ declare(strict_types=1);
  * +----------------------------------------------------------------------+
  * |                          ThinkSNS Plus                               |
  * +----------------------------------------------------------------------+
- * | Copyright (c) 2017 Chengdu ZhiYiChuangXiang Technology Co., Ltd.     |
+ * | Copyright (c) 2018 Chengdu ZhiYiChuangXiang Technology Co., Ltd.     |
  * +----------------------------------------------------------------------+
  * | This source file is subject to version 2.0 of the Apache license,    |
  * | that is bundled with this package in the file LICENSE, and is        |
@@ -282,6 +282,14 @@ class FeedController extends Controller
                 $process->reject(0, $pinnedFeed->amount, $pinnedFeed->user_id, '动态申请置顶退款', sprintf('退还动态《%s》申请置顶的款项', str_limit($feed->feed_content, 100)));
                 $pinnedFeed->delete();
             }
+
+            // 删除话题关联
+            $feed->topics->each(function ($topic) {
+                $topic->feeds_count -= 1;
+                $topic->save();
+            });
+            $feed->topics()->sync([]);
+
             $feed->delete();
             $cache->forget(sprintf('feed:%s', $feed->id));
         });

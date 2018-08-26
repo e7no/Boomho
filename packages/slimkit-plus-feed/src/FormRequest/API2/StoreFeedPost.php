@@ -6,7 +6,7 @@ declare(strict_types=1);
  * +----------------------------------------------------------------------+
  * |                          ThinkSNS Plus                               |
  * +----------------------------------------------------------------------+
- * | Copyright (c) 2017 Chengdu ZhiYiChuangXiang Technology Co., Ltd.     |
+ * | Copyright (c) 2018 Chengdu ZhiYiChuangXiang Technology Co., Ltd.     |
  * +----------------------------------------------------------------------+
  * | This source file is subject to version 2.0 of the Apache license,    |
  * | that is bundled with this package in the file LICENSE, and is        |
@@ -21,6 +21,7 @@ declare(strict_types=1);
 namespace Zhiyi\Component\ZhiyiPlus\PlusComponentFeed\FormRequest\API2;
 
 use Illuminate\Validation\Rule;
+use Zhiyi\Plus\Types\Models as ModelTypes;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Auth\Access\AuthorizationException;
 
@@ -80,6 +81,10 @@ class StoreFeedPost extends FormRequest
                     $query->where('raw', null);
                 }),
             ],
+            'topics' => ['nullable', 'array'],
+            'topics.*' => ['required_with:topics', 'integer', 'min:1'],
+            'repostable_type' => ['required_with:repostable_id', Rule::in(ModelTypes::$types)],
+            'repostable_id' => ['required_with:repostable_type', 'integer', 'min:1'],
         ];
     }
 
@@ -114,6 +119,15 @@ class StoreFeedPost extends FormRequest
             'video.video_id.exists' => '视频已被使用',
             'video.cover_id.required_without' => '视频封面不存在',
             'video.cover_id.exists' => '视频封面已被使用',
+            'topics.array' => '话题内容错误',
+            'topics.*.required_with' => '话题数据不合法',
+            'topics.*.integer' => '话题数据必须是合法内容',
+            'topics.*.min' => '话题不存在',
+            'repostable_type.required_with' => '请求不合法',
+            'repostable_id.required_with' => '请求不合法',
+            'repostable_type.in' => '转发的资源类型不合法',
+            'repostable_id.integer' => '转发的资源 ID 必须是正整数',
+            'repostable_id.min' => '转发的资源 ID 不合法',
         ];
     }
 

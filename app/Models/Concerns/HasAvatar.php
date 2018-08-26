@@ -6,7 +6,7 @@ declare(strict_types=1);
  * +----------------------------------------------------------------------+
  * |                          ThinkSNS Plus                               |
  * +----------------------------------------------------------------------+
- * | Copyright (c) 2017 Chengdu ZhiYiChuangXiang Technology Co., Ltd.     |
+ * | Copyright (c) 2018 Chengdu ZhiYiChuangXiang Technology Co., Ltd.     |
  * +----------------------------------------------------------------------+
  * | This source file is subject to version 2.0 of the Apache license,    |
  * | that is bundled with this package in the file LICENSE, and is        |
@@ -114,6 +114,7 @@ trait HasAvatar
      */
     public function storeAvatar(UploadedFile $avatar, string $prefix = '')
     {
+        $prefix = $prefix ?: $this->getAvatarPrefix();
         $extension = strtolower($avatar->extension());
         if (! in_array($extension, $this->getAvatarExtensions())) {
             throw new \Exception('保存的头像格式不符合要求');

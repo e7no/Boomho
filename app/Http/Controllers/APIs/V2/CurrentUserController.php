@@ -6,7 +6,7 @@ declare(strict_types=1);
  * +----------------------------------------------------------------------+
  * |                          ThinkSNS Plus                               |
  * +----------------------------------------------------------------------+
- * | Copyright (c) 2017 Chengdu ZhiYiChuangXiang Technology Co., Ltd.     |
+ * | Copyright (c) 2018 Chengdu ZhiYiChuangXiang Technology Co., Ltd.     |
  * +----------------------------------------------------------------------+
  * | This source file is subject to version 2.0 of the Apache license,    |
  * | that is bundled with this package in the file LICENSE, and is        |
@@ -45,6 +45,7 @@ class CurrentUserController extends Controller
         $user->makeVisible(['phone', 'email']);
         $friends_count = $user->mutual()->get()->count();
         $user->friends_count = $friends_count;
+        $user->initial_password = (bool) $user->password;
 
         return $response->json($user, 200);
     }

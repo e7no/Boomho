@@ -6,7 +6,7 @@ declare(strict_types=1);
  * +----------------------------------------------------------------------+
  * |                          ThinkSNS Plus                               |
  * +----------------------------------------------------------------------+
- * | Copyright (c) 2017 Chengdu ZhiYiChuangXiang Technology Co., Ltd.     |
+ * | Copyright (c) 2018 Chengdu ZhiYiChuangXiang Technology Co., Ltd.     |
  * +----------------------------------------------------------------------+
  * | This source file is subject to version 2.0 of the Apache license,    |
  * | that is bundled with this package in the file LICENSE, and is        |
@@ -55,11 +55,14 @@ class SystemController extends Controller
      */
     public function about()
     {
-        if (! is_null(config('site.about_url'))) {
-            return redirect(config('site.about_url'), 302);
+        if (! is_null(config('site.aboutUs.url'))) {
+            return redirect(config('site.aboutUs.url'), 302);
         }
+        $body = config('site.aboutUs.content', '');
+        $body = preg_replace('/\@\!\[(.*?)\]\((\d+)\)/i', '![$1]('.config('app.url').'/api/v2/files/$2)', $body);
+        $content = htmlspecialchars_decode(\Parsedown::instance()->setMarkupEscaped(true)->text($body));
 
-        return view('about');
+        return view('about', ['content' => $content]);
     }
 
     /**

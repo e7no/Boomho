@@ -6,7 +6,7 @@ declare(strict_types=1);
  * +----------------------------------------------------------------------+
  * |                          ThinkSNS Plus                               |
  * +----------------------------------------------------------------------+
- * | Copyright (c) 2017 Chengdu ZhiYiChuangXiang Technology Co., Ltd.     |
+ * | Copyright (c) 2018 Chengdu ZhiYiChuangXiang Technology Co., Ltd.     |
  * +----------------------------------------------------------------------+
  * | This source file is subject to version 2.0 of the Apache license,    |
  * | that is bundled with this package in the file LICENSE, and is        |
@@ -25,11 +25,14 @@ use Zhiyi\Plus\Services\Push;
 use Zhiyi\Plus\Models\Comment;
 use Zhiyi\Plus\Models\UserCount;
 use Zhiyi\Plus\Http\Controllers\Controller;
+use Zhiyi\Plus\AtMessage\AtMessageHelperTrait;
 use Zhiyi\Component\ZhiyiPlus\PlusComponentMusic\Models\Music;
 use Zhiyi\Component\ZhiyiPlus\PlusComponentMusic\Models\MusicSpecial;
 
 class MusicCommentController extends Controller
 {
+    use AtMessageHelperTrait;
+
     /**
      * 添加音乐评论.
      *
@@ -70,6 +73,8 @@ class MusicCommentController extends Controller
             $replyUser->unreadCount()->firstOrCreate([])->increment('unread_comments_count', 1);
             app(Push::class)->push(sprintf('%s 回复了您的评论', $user->name), (string) $replyUser->id, ['channel' => 'music:comment-reply']);
         }
+
+        $this->sendAtMessage($comment->body, $user, $comment);
 
         return response()->json([
             'message' => '操作成功',

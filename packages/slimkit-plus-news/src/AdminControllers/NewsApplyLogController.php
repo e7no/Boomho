@@ -6,7 +6,7 @@ declare(strict_types=1);
  * +----------------------------------------------------------------------+
  * |                          ThinkSNS Plus                               |
  * +----------------------------------------------------------------------+
- * | Copyright (c) 2017 Chengdu ZhiYiChuangXiang Technology Co., Ltd.     |
+ * | Copyright (c) 2018 Chengdu ZhiYiChuangXiang Technology Co., Ltd.     |
  * +----------------------------------------------------------------------+
  * | This source file is subject to version 2.0 of the Apache license,    |
  * | that is bundled with this package in the file LICENSE, and is        |
@@ -41,9 +41,9 @@ class NewsApplyLogController extends Controller
         $key = $request->query('key');
         $user_id = $request->query('user_id');
         $news_id = $request->query('news_id');
-        $query = $model->when($user_id, function ($query) {
+        $query = $model->when($user_id, function ($query) use ($user_id) {
             return $query->where('user_id', $user_id);
-        })->when($news_id, function ($query) {
+        })->when($news_id, function ($query) use ($news_id) {
             return $query->where('news_id', $news_id);
         })->whereHas('news', function ($query) use ($key) {
             return $query->when($key, function ($query) use ($key) {

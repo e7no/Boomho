@@ -6,7 +6,7 @@ declare(strict_types=1);
  * +----------------------------------------------------------------------+
  * |                          ThinkSNS Plus                               |
  * +----------------------------------------------------------------------+
- * | Copyright (c) 2017 Chengdu ZhiYiChuangXiang Technology Co., Ltd.     |
+ * | Copyright (c) 2018 Chengdu ZhiYiChuangXiang Technology Co., Ltd.     |
  * +----------------------------------------------------------------------+
  * | This source file is subject to version 2.0 of the Apache license,    |
  * | that is bundled with this package in the file LICENSE, and is        |
@@ -29,6 +29,9 @@ use Zhiyi\Plus\Models\BlackList;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Zhiyi\Plus\Models\FeedTopic as FeedTopicModel;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Zhiyi\Plus\Models\FeedTopicLink as FeedTopicLinkModel;
 
 class Feed extends Model
 {
@@ -211,5 +214,28 @@ class Feed extends Model
     public function reports()
     {
         return $this->morphMany(Report::class, 'reportable');
+    }
+
+    /**
+     * The feed topic belongs to many.
+     *
+     * @return Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function topics(): BelongsToMany
+    {
+        $table = (new FeedTopicLinkModel)->getTable();
+
+        return $this
+            ->belongsToMany(FeedTopicModel::class, $table, 'feed_id', 'topic_id')
+            ->using(FeedTopicLinkModel::class);
+    }
+
+    public function makeHotValue($model = null): int
+    {
+        if (! $model instanceof static) {
+            $model = $this;
+        }
+
+        return $model->feed_view_count + $model->feed_comment_count * 10 + $model->like_count * 5;
     }
 }

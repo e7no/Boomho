@@ -4,7 +4,7 @@
  * +----------------------------------------------------------------------+
  * |                          ThinkSNS Plus                               |
  * +----------------------------------------------------------------------+
- * | Copyright (c) 2017 Chengdu ZhiYiChuangXiang Technology Co., Ltd.     |
+ * | Copyright (c) 2018 Chengdu ZhiYiChuangXiang Technology Co., Ltd.     |
  * +----------------------------------------------------------------------+
  * | This source file is subject to version 2.0 of the Apache license,    |
  * | that is bundled with this package in the file LICENSE, and is        |
@@ -65,16 +65,16 @@ class AreasTableSeeder extends Seeder
         foreach (static::$regions as $code => $name) {
             $provinceRegionCode = substr($code, 0, 2).'0000';
             $cityRegionCode = substr($code, 0, 4).'00';
-            $countyRrgionCode = (string) $code;
+            $countyRegionCode = (string) $code;
 
             $provinceName = static::$regions[$provinceRegionCode] ?? null;
             $cityName = static::$regions[$cityRegionCode] ?? null;
-            $countyName = static::$regions[$countyRrgionCode] ?? null;
+            $countyName = $name;
 
             $cityName = $cityRegionCode === $provinceRegionCode ? null : $cityName;
             $countyName = (
-                ($countyRrgionCode === $provinceRegionCode)
-                || ($countyRrgionCode === $cityRegionCode)
+                ($countyRegionCode === $provinceRegionCode)
+                || ($countyRegionCode === $cityRegionCode)
             ) ? null : $countyName;
 
             $province = $this->advance($output, (bool) $provinceName, $china->id, (string) $provinceName);

@@ -6,7 +6,7 @@ declare(strict_types=1);
  * +----------------------------------------------------------------------+
  * |                          ThinkSNS Plus                               |
  * +----------------------------------------------------------------------+
- * | Copyright (c) 2017 Chengdu ZhiYiChuangXiang Technology Co., Ltd.     |
+ * | Copyright (c) 2018 Chengdu ZhiYiChuangXiang Technology Co., Ltd.     |
  * +----------------------------------------------------------------------+
  * | This source file is subject to version 2.0 of the Apache license,    |
  * | that is bundled with this package in the file LICENSE, and is        |
@@ -27,6 +27,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Zhiyi\Plus\Http\Controllers\APIs\V2\UserAvatarController;
 
 class User extends Authenticatable implements JWTSubject
@@ -50,7 +51,7 @@ class User extends Authenticatable implements JWTSubject
         Relations\UserHasLike,
         Relations\UserHasCurrency,
         Relations\UserHasNewWallet,
-        Relations\UserHasBlackLists;
+        Relations\UserHasBlackList;
 
     /**
      * The attributes that are mass assignable.
@@ -335,5 +336,19 @@ class User extends Authenticatable implements JWTSubject
     public function getImPwdHash()
     {
         return $this->password ? md5($this->password) : md5('123456');
+    }
+
+    /**
+     * The user topics belong to many.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function feedTopics(): BelongsToMany
+    {
+        $table = (new FeedTopicUserLink)->getTable();
+
+        return $this
+            ->belongsToMany(FeedTopic::class, $table, 'user_id', 'topic_id')
+            ->using(FeedTopicUserLink::class);
     }
 }

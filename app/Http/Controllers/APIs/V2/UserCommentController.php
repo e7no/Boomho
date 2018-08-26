@@ -6,7 +6,7 @@ declare(strict_types=1);
  * +----------------------------------------------------------------------+
  * |                          ThinkSNS Plus                               |
  * +----------------------------------------------------------------------+
- * | Copyright (c) 2017 Chengdu ZhiYiChuangXiang Technology Co., Ltd.     |
+ * | Copyright (c) 2018 Chengdu ZhiYiChuangXiang Technology Co., Ltd.     |
  * +----------------------------------------------------------------------+
  * | This source file is subject to version 2.0 of the Apache license,    |
  * | that is bundled with this package in the file LICENSE, and is        |
@@ -42,7 +42,18 @@ class UserCommentController extends Controller
         $after = (int) $request->query('after', 0);
 
         $comments = $model->getConnection()->transaction(function () use ($user, $limit, $after, $model) {
-            return $model->with(['commentable', 'user', 'reply', 'target'])
+            return $model->with([
+                    'commentable',
+                    'user' => function ($query) {
+                        return $query->withTrashed();
+                    },
+                    'reply' => function ($query) {
+                        return $query->withTrashed();
+                    },
+                    'target' => function ($query) {
+                        return $query->withTrashed();
+                    },
+                ])
                 ->where(function ($query) use ($user) {
                     return $query->where('target_user', $user->id)
                         ->orWhere('reply_user', $user->id);

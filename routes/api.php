@@ -4,7 +4,7 @@
  * +----------------------------------------------------------------------+
  * |                          ThinkSNS Plus                               |
  * +----------------------------------------------------------------------+
- * | Copyright (c) 2017 Chengdu ZhiYiChuangXiang Technology Co., Ltd.     |
+ * | Copyright (c) 2018 Chengdu ZhiYiChuangXiang Technology Co., Ltd.     |
  * +----------------------------------------------------------------------+
  * | This source file is subject to version 2.0 of the Apache license,    |
  * | that is bundled with this package in the file LICENSE, and is        |
@@ -616,4 +616,179 @@ Route::group(['prefix' => 'v2'], function (RouteContract $api) {
      * 重置未读信息
      */
     $api->patch('/user/counts', \Zhiyi\Plus\API2\Controllers\UserCountsController::class.'@reset');
+
+    // Feed group
+    // @Route /api/v2/feed
+    $api->group(['prefix' => 'feed'], function (RouteContract $api) {
+        // Feed Topics Group
+        // @Route /api/v2/feed/topics
+        $api->group(['prefix' => 'topics'], function (RouteContract $api) {
+            /*
+             * Topic Index
+             *
+             * @Get /api/v2/feed/topics
+             * @Param::query {q} Search topic name keyword.
+             * @Param::query {limit} Featch data limit.
+             * @Param::query {index} Featch data start index.
+             * @Param::query {direction} Can be one of `asc` or `desc`.
+             * @Param::query('only', 'string', 'The value is `hot`')
+             * @Response::header('Status', 200, 'OK')
+             * @Response::json('<pre>
+             *  [{
+             *   "id": 1,        // Topic ID
+             *   "name": "Plus", // Topic name
+             *   "logo": 2,      // Topic logo, file with ID
+             *   "created_at": "2018-07-23T15:04:23Z" // Topic created datetime
+             *  }]
+             *  </pre>')
+             */
+            $api->get('', \Zhiyi\Plus\API2\Controllers\Feed\Topic::class.'@index');
+
+            /*
+             * Create an topic
+             *
+             * @Post /api/v2/feed/topics
+             * @Param::input('name', 'string', 'The name of the topic.')
+             * @Param::input('desc', 'string', 'The desc of the topic.')
+             * @Param::input('logo', 'integer', 'The topic logo file with     ID.')
+             * @Response::header('Status', 201, 'Created')
+             * @Response::json('<pre>
+             * {
+             *     "id": 2 // Created topic id
+             * }
+             * </pre>')
+             */
+            $api->post('', \Zhiyi\Plus\API2\Controllers\Feed\Topic::class.'@create');
+
+            /*
+             * Edit an topic.
+             *
+             * @Patch /api/v2/feed/topics/:topicID
+             * @Param::input('desc', 'string', 'The desc of the topic')
+             * @Param::input('logo', 'integer', 'The topic logo file with ID')
+             * @Response::header('Status', 204, 'No Content')
+             */
+            $api->patch('{topic}', \Zhiyi\Plus\API2\Controllers\Feed\Topic::class.'@update');
+
+            /*
+             * Get a single topic.
+             *
+             * @Get /api/v2/feed/topics/:topicID
+             * @Response::header('Status', 200, 'OK')
+             */
+            $api->get('{topic}', \Zhiyi\Plus\API2\Controllers\Feed\Topic::class.'@show');
+
+            /*
+             * List feeds for a topic.
+             *
+             * @Get /api/v2/feed/topics/:topicID/feeds
+             * @Param::query('limit', 'integer', 'The data limit, default `15`.')
+             * @Param::query('index', 'integer', 'fetch data start index')
+             * @Param::query('direction', 'string', 'Can be one of `asc` or `desc`.')
+             * @Response::header('Status', 200, 'OK')
+             * @Response::json('<pre>
+             * [{
+             *     ""
+             * }]
+             * </pre>')
+             */
+            $api->get('{topic}/feeds', Zhiyi\Plus\API2\Controllers\Feed\TopicFeed::class);
+
+            /*
+             *
+             * List participants for a topic.
+             *
+             * @Get /api/v2/feed/topic/:topicID/participants
+             * @Param::query('limit', 'integer', 'The data limit, default `15`.')
+             * @Param::query('offset', 'integer', 'The data offset, default `0`.')
+             * @Response::header('Status', 200, 'OK')
+             * @Response::json('<pre>
+             * [2, 3, 4, 5]
+             * </pre>')
+             */
+            $api->get('{topic}/participants', \Zhiyi\Plus\API2\Controllers\Feed\TopicParticipant::class.'@index');
+        });
+    });
+
+    /*
+     * Follow a feed topic.
+     *
+     * @Put /api/v2/user/feed-topics/:topicID
+     * @Response::header('Status', 204, 'No Content')
+     */
+    $api->put('user/feed-topics/{topicID}', \Zhiyi\Plus\API2\Controllers\Feed\TopicFollow::class.'@follow');
+
+    /*
+     * Unfollow a feed topic
+     *
+     * @Delete /api/v2/user/feed-topics/:topicID
+     * @Response::header('Status', 204, 'No Content')
+     */
+    $api->delete('user/feed-topics/{topicID}', \Zhiyi\Plus\API2\Controllers\Feed\TopicFollow::class.'@unfollow');
+
+    /*
+     * Report a feed topic.
+     *
+     * @Put /api/v2/user/report-feed-topics/:topicID
+     * @Patam::query('message', 'string', 'Report the feed topic message.')
+     * @Response::header('Status', 204, 'No Content')
+     */
+    $api->put('user/report-feed-topics/{topic}', \Zhiyi\Plus\API2\Controllers\Feed\TopicReport::class);
+
+    /*
+     * List at me messages.
+     *
+     * @Get /api/v2/user/message/atme
+     * @Param::query('limit', 'integer', 'The query data limit.')
+     * @Param::query('index', 'integer', 'The query start index.')
+     * @param::query('direction', 'enum:asc,desc', 'The data order by id direction.')
+     * @Response::header('Sttaus', 200, 'OK')
+     * @response::json('<pre>
+     * [
+     *  {
+     *      "id": 1,
+     *      "user_id": 1,
+     *      "resourceable": {
+     *          "type": "feeds",
+     *          "id": "id"
+     *      },
+     *      "created_at": "2018-08-13T08:06:54Z"
+     *  }
+     * ]
+     * </pre>')
+     */
+    $api->get('user/message/atme', \Zhiyi\Plus\API2\Controllers\User\Message\At::class);
+
+    /*
+     * List all comments
+     *
+     * @Get /api/v2/comments
+     * @Param::query('limit', 'integer', 'The query data limit.')
+     * @Param::query('index', 'integer', 'The query data start index.')
+     * @Param::query('direction', 'enum:asc,desc', 'The data order by id direction.')
+     * @Param::query('author', 'integer', 'The comment author user id')
+     * @Param::query('for_user', 'integer', 'The comment target user id')
+     * @Param::query('for_type', 'enum:all,target,reply', 'for user type')
+     * @Param::query('id', 'string', 'Comment IDs, using `,` slicing')
+     * @Param::query('resourceable_id', 'string', 'Resourceable IDs, using `,` slicing')
+     * @Param::query('resourceable_type', 'string', 'Resourceabe type name')
+     * @Response::header('Sttaus', 200, 'OK')
+     * @Response::json('<pre>
+     * [
+     *     {
+     *          "id": 1,
+     *          "user_id": 1,
+     *          "target_user": 2,
+     *          "reply_user": 3,
+     *          "body": "Hi, I love you.",
+     *          "resourceable": {
+     *              "type": "feeds",
+     *              "id": 1
+     *          },
+     *          "created_at": "2018-08-15T05:57:01Z"
+     *     }
+     * ]
+     * </pre>')
+     */
+    $api->get('comments', \Zhiyi\Plus\API2\Controllers\Comment::class.'@index');
 });

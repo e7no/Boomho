@@ -6,7 +6,7 @@ declare(strict_types=1);
  * +----------------------------------------------------------------------+
  * |                          ThinkSNS Plus                               |
  * +----------------------------------------------------------------------+
- * | Copyright (c) 2017 Chengdu ZhiYiChuangXiang Technology Co., Ltd.     |
+ * | Copyright (c) 2018 Chengdu ZhiYiChuangXiang Technology Co., Ltd.     |
  * +----------------------------------------------------------------------+
  * | This source file is subject to version 2.0 of the Apache license,    |
  * | that is bundled with this package in the file LICENSE, and is        |
@@ -24,6 +24,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Zhiyi\Plus\Services\Push;
 use Zhiyi\Plus\Http\Controllers\Controller;
+use Zhiyi\Plus\AtMessage\AtMessageHelperTrait;
 use Zhiyi\Plus\Models\Comment as CommentModel;
 use Zhiyi\Plus\Models\UserCount as UserCountModel;
 use Zhiyi\Plus\Packages\Currency\Processes\User as UserProcess;
@@ -34,6 +35,8 @@ use Zhiyi\Component\ZhiyiPlus\PlusComponentFeed\FormRequest\API2\StoreFeedCommen
 
 class FeedCommentController extends Controller
 {
+    use AtMessageHelperTrait;
+
     /**
      * List comments of the feed.
      *
@@ -216,6 +219,9 @@ class FeedCommentController extends Controller
             unset($userCommentedCount);
         }
         $comment->load('user');
+
+        // 发送 at 数据
+        $this->sendAtMessage($comment->body, $user, $comment);
 
         return $response->json([
             'message' => '操作成功',
